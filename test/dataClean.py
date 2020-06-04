@@ -38,5 +38,33 @@ def norm_test():
     print(values)
 
 
+def rnn_test():
+    """
+    测试 RNN 的使用方法
+    :return:
+    """
+    from sklearn.neighbors import NearestNeighbors
+    samples = np.array([[0., 0., 0.], [0., .5, 0.], [1., 1., .5]])
+    neigh = NearestNeighbors(radius=1.6).fit(samples)
+    distance, index = neigh.radius_neighbors(samples)
+    print(distance)
+    print(index)
+    print(distance[0])
+    print(distance[0])
+    print(type(index))
+    print(type(index[0]))
+
+    for temp in index:
+        print(temp)
+
+    print(len(index))
+    print(len(index[0]))
+
+    dicts = {}
+    dicts["hello"] = 1
+    dicts["hi"] = 2
+    print(str(dicts))
+
+
 if __name__ == '__main__':
-    norm_test()
+    rnn_test()

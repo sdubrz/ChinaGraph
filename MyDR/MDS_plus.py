@@ -25,7 +25,7 @@ def local_mds(X, n_neighbors=5, alpha=0.32):
 
 def run_test():
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "hybrid2"
+    data_name = "2plane90"
     data_path = path + data_name+"\\"
     data = np.loadtxt(data_path+"data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(data_path+"label.csv", dtype=np.int, delimiter=",")
