@@ -22,5 +22,21 @@ def plane_make():
     np.savetxt(path+"label.csv", label, fmt='%d', delimiter=",")
 
 
+def norm_test():
+    # A = np.array([[1, 2, 3],
+    #               [4, 5, 6],
+    #               [7, 8, 9]])
+
+    A = np.array([[-1, 1, 0],
+                  [-4, 3, 0],
+                  [1, 0, 2]])
+
+    print(np.linalg.norm(A, ord=2))
+
+    (values, vectors) = np.linalg.eig(A)
+    print(vectors)
+    print(values)
+
+
 if __name__ == '__main__':
-    plane_make()
+    norm_test()
