@@ -78,5 +78,18 @@ def linear_test():
     print(B)
 
 
+def d3_test():
+    path = "E:\\ChinaGraph\\Data\\2plane90\\"
+    X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
+    label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
+
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D  # 空间三维画图
+    ax = Axes3D(plt.figure())
+    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=label)
+    plt.show()
+
+
 if __name__ == '__main__':
-    linear_test()
+    # linear_test()
+    d3_test()

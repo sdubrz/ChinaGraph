@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn.manifold import MDS
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
@@ -267,6 +268,12 @@ def run_example():
     X = np.loadtxt(path+"data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path+"label.csv", dtype=np.int, delimiter=",")
 
+    # 如果是三维的，则画出三维散点图
+    ax3d = Axes3D(plt.figure())
+    ax3d.scatter(X[:, 0], X[:, 1], X[:, 2], c=label)
+    plt.title('original data')
+    plt.show()
+
     params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
@@ -275,12 +282,22 @@ def run_example():
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
-    dr = LocalPCADR(n_components=2, affinity="cov", parameters=params, frame='MDS', manifold_dimension=2)
+    affinity = 'cov'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'
+    frame_work = 'MDS'  # frame 的取值可以为 'MDS'  't-SNE'
+    dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work, manifold_dimension=2)
 
     Y = dr.fit_transform(X)
+
+    # 画图
     plt.scatter(Y[:, 0], Y[:, 1], c=label)
     ax = plt.gca()
     ax.set_aspect(1)
+    title_str = 'Frame[' + frame_work + '] ' + affinity + ' alpha=' + str(params['alpha']) + ' beta=' + str(params['beta'])
+    if params['neighborhood_type'] == 'knn':
+        title_str = title_str + ' k=' + str(params['n_neighbors'])
+    elif params['neighborhood_type'] == 'rnn':
+        title_str = title_str + ' r=' + str(params['neighborhood_size'])
+    plt.title(title_str)
     plt.show()
 
 
