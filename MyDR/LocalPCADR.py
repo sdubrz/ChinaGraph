@@ -2,6 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.manifold import MDS
+from sklearn.manifold import TSNE
+from sklearn.manifold import Isomap
+from sklearn.manifold import LocallyLinearEmbedding
+from sklearn.decomposition import PCA
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
 from MyDR import tsneFrame
@@ -119,6 +123,11 @@ class LocalPCADR:
                         'expQ': 同时考虑投影的相似性与欧氏距离的相似性，并转化为指数形式
                         'cov': 同时考虑协方差矩阵的相似性与欧氏距离的相似性，它们两项的加权和
                         'Q': 同时考虑投影的相似性与欧氏距离的相似性，它们两项的加权和
+                        'MDS': 直接返回 MDS 的降维结果
+                        't-SNE': 直接返回 t-SNE 的降维结果
+                        'PCA': 直接返回 PCA的降维结果
+                        'Isomap': 直接返回 Isomap 的降维结果
+                        'LLE': 直接返回 LLE 的降维结果
         :param parameters: 一个参数字典，里面是欧氏距离与 local PCA的权重，下面是几个常用的参数
                         'alpha': 欧氏距离的权重
                         'beta': local PCA 的权重
@@ -126,11 +135,13 @@ class LocalPCADR:
                                             'knn': K近邻方法
                                             'rnn': 设置邻域半径的方法
                         'n_neighbors': 邻域内点的个数，当 neighborhood_type == 'knn' 时有效
+                                        或当 affinity == 'Isomap' || affinity == 'LLE' 时，作为算法所需的参数
                         'neighborhood_size': 局部邻域的半径大小，当 neighborhood_type == 'rnn' 时有效
                         'distance_type': 协方差矩阵的距离标准
                                         'spectralNorm': 谱范数，直接使用 numpy.linalg.norm(Matrix)
                                         'mahalanobis': 马氏距离，对差矩阵进行特征值分解，取最大的特征值（假设所有特征值均为非负数）
                         'manifold_dimension': 流形本身的维度
+                        'perplexity': 用 t-SNE 降维时的困惑度
         :param frame: 迭代求解降维结果时用的框架
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
@@ -244,6 +255,24 @@ class LocalPCADR:
         (n, m) = X.shape
         print(self.parameters)
 
+        # 用经典的降维方法
+        if self.affinity == 'PCA':  # 直接返回 PCA 的降维结果
+            pca = PCA(n_components=self.n_components)
+            return pca.fit_transform(X)
+        elif self.affinity == 'MDS':  # 直接返回 MDS 的降维结果
+            mds = MDS(n_components=self.n_components)
+            return mds.fit_transform(X)
+        elif self.affinity == 'Isomap':  # 直接返回 Isomap 的降维结果
+            iso = Isomap(n_components=self.n_components, n_neighbors=self.parameters['n_neighbors'])
+            return iso.fit_transform(X)
+        elif self.affinity == 't-SNE':  # 直接返回 t-SNE 的降维结果
+            tsne = TSNE(n_components=self.n_components, perplexity=self.parameters['perplexity'])
+            return tsne.fit_transform(X)
+        elif self.affinity == 'LLE':  # 直接返回 LLE 的降维结果
+            lle = LocallyLinearEmbedding(n_components=self.n_components, n_neighbors=self.parameters['n_neighbors'])
+            return lle.fit_transform(X)
+
+        # 用我们自己设计的降维方法
         W = self.affinity_matrix(X)
         if self.frame == 'MDS':
             print('Using MDS frame...')
@@ -267,12 +296,14 @@ def run_example():
     path = "E:\\ChinaGraph\\Data\\2plane90\\"
     X = np.loadtxt(path+"data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path+"label.csv", dtype=np.int, delimiter=",")
+    (n, m) = X.shape
 
     # 如果是三维的，则画出三维散点图
-    ax3d = Axes3D(plt.figure())
-    ax3d.scatter(X[:, 0], X[:, 1], X[:, 2], c=label)
-    plt.title('original data')
-    plt.show()
+    if m == 3:
+        ax3d = Axes3D(plt.figure())
+        ax3d.scatter(X[:, 0], X[:, 1], X[:, 2], c=label)
+        plt.title('original data')
+        plt.show()
 
     params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn'
@@ -282,22 +313,41 @@ def run_example():
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
-    affinity = 'cov'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'
-    frame_work = 'MDS'  # frame 的取值可以为 'MDS'  't-SNE'
+    params['perplexity'] = 30.0  # perplexity in t-SNE
+    affinity = 'cov'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'
+    frame_work = 't-SNE'  # frame 的取值可以为 'MDS'  't-SNE'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work, manifold_dimension=2)
 
     Y = dr.fit_transform(X)
+    run_str = ''  # 用于存放结果的文件名
 
-    # 画图
-    plt.scatter(Y[:, 0], Y[:, 1], c=label)
-    ax = plt.gca()
-    ax.set_aspect(1)
-    title_str = 'Frame[' + frame_work + '] ' + affinity + ' alpha=' + str(params['alpha']) + ' beta=' + str(params['beta'])
-    if params['neighborhood_type'] == 'knn':
-        title_str = title_str + ' k=' + str(params['n_neighbors'])
-    elif params['neighborhood_type'] == 'rnn':
-        title_str = title_str + ' r=' + str(params['neighborhood_size'])
-    plt.title(title_str)
+    # 经典降维方法的画图
+    classic_methods = ['PCA', 'MDS', 't-SNE', 'Isomap', 'LLE']
+    if affinity in classic_methods:
+        plt.scatter(Y[:, 0], Y[:, 1], c=label)
+        ax = plt.gca()
+        ax.set_aspect(1)
+        title_str = affinity
+        if affinity == 't-SNE':
+            title_str = title_str + " perplexity=" + str(params['perplexity'])
+        elif affinity == 'Isomap' or affinity == 'LLE':
+            title_str = title_str + ' n_neighbors=' + str(params['n_neighbors'])
+        plt.title(title_str)
+        run_str = title_str
+    else:
+        # 我们的降维方法的画图
+        plt.scatter(Y[:, 0], Y[:, 1], c=label)
+        ax = plt.gca()
+        ax.set_aspect(1)
+        title_str = 'Frame[' + frame_work + '] ' + affinity + ' alpha=' + str(params['alpha']) + ' beta=' + str(params['beta'])
+        if params['neighborhood_type'] == 'knn':
+            title_str = title_str + ' k=' + str(params['n_neighbors'])
+        elif params['neighborhood_type'] == 'rnn':
+            title_str = title_str + ' r=' + str(params['neighborhood_size'])
+        plt.title(title_str)
+        run_str = title_str
+    np.savetxt(path+run_str+".csv", Y, fmt='%.18e', delimiter=",")
+    plt.savefig(path+run_str+".png")
     plt.show()
 
 
