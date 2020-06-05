@@ -66,5 +66,17 @@ def rnn_test():
     print(str(dicts))
 
 
+def linear_test():
+    A = np.array([[1, 2, 3],
+                  [4, 5, 6],
+                  [7, 8, 9]])
+    (U, S, V) = np.linalg.svd(A)
+    print(U)
+    print(S)
+    print(V)
+    B = np.outer(A[:, 0], A[:, 0])
+    print(B)
+
+
 if __name__ == '__main__':
-    rnn_test()
+    linear_test()

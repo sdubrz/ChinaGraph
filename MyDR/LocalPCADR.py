@@ -129,6 +129,7 @@ class LocalPCADR:
                         'distance_type': 协方差矩阵的距离标准
                                         'spectralNorm': 谱范数，直接使用 numpy.linalg.norm(Matrix)
                                         'mahalanobis': 马氏距离，对差矩阵进行特征值分解，取最大的特征值（假设所有特征值均为非负数）
+                        'manifold_dimension': 流形本身的维度
         :param frame: 迭代求解降维结果时用的框架
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
@@ -159,6 +160,25 @@ class LocalPCADR:
             return
 
         return M
+
+    def Q_matrix(self, Cov):
+        """
+        用奇异值分解的方法重建 Q 矩阵
+        :param Cov: 每个点的协方差矩阵
+        :return:
+        """
+        (n, m, k) = Cov.shape
+        Q = np.zeros(Cov.shape)
+        d = self.parameters['manifold_dimension']
+
+        for i in range(0, n):
+            (U, S, V) = np.linalg.svd(Cov[i, :, :])
+            if d > 1:
+                Q[i, :, :] = np.matmul(U[:, 0:d], U[:, 0:d].T)
+            else:
+                Q[i, :, :] = np.outer(U[:, 0], U[:, 0])
+
+        return Q
 
     def affinity_matrix(self, X):
         """
@@ -191,10 +211,26 @@ class LocalPCADR:
             W = np.exp(W)  # 这里每个点的方差设置成了完全相同的，可能还是会需要设置不同的方差
             return W
         elif self.affinity == 'Q':
-            # Q 矩阵的相似性
-            print('Q')
+            # Q 矩阵的相似性 加上 欧氏距离的相似性
+            Cov = self.local_cov(X)  # 协方差矩阵
+            print('Calculate Q matrix...')
+            Q = self.Q_matrix(Cov)
+            print('Calculate the spectral distance of local projection matrix...')
+            Qd = cov_matrix_distance(Q, self.parameters['distance_type'])
+            Qd = Qd / (np.max(Qd)+1e-15)
+            W = self.parameters['alpha'] * Ed + self.parameters['beta'] * Qd
+            return W
         elif self.affinity == 'expQ':
-            print('expQ')
+            # 综合考虑投影矩阵 Q 与欧氏距离，然后用 exp 函数进行加工
+            Cov = self.local_cov(X)  # 协方差矩阵
+            print('Calculate Q matrix...')
+            Q = self.Q_matrix(Cov)
+            print('Calculate the spectral distance of local projection matrix...')
+            Qd = cov_matrix_distance(Q, self.parameters['distance_type'])
+            Qd = Qd / (np.max(Qd) + 1e-15)
+            W = self.parameters['alpha'] * Ed + self.parameters['beta'] * Qd
+            W = np.exp(W)
+            return W
 
         return W
 
@@ -238,6 +274,7 @@ def run_example():
     params['alpha'] = 0.5  # the weight of euclidean distance
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
+    params['manifold_dimension'] = 2  # the real dimension of manifolds
     dr = LocalPCADR(n_components=2, affinity="cov", parameters=params, frame='MDS', manifold_dimension=2)
 
     Y = dr.fit_transform(X)
