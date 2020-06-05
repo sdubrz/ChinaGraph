@@ -182,7 +182,14 @@ class LocalPCADR:
             return W
         elif self.affinity == 'expCov':
             # 综合考虑协方差矩阵的距离与欧氏距离，然后用 exp 函数加工
-            print('expCov')
+            # 协方差矩阵距离与欧氏距离加权和
+            Cov = self.local_cov(X)  # 协方差矩阵
+            print('Calculate the spectral distance of local covariance matrix...')
+            Cd = cov_matrix_distance(Cov, self.parameters['distance_type'])  # 协方差矩阵之间的谱距离
+            Cd = Cd / (np.max(Cd) + 1e-15)
+            W = self.parameters["alpha"] * Ed + self.parameters["beta"] * Cd
+            W = np.exp(W)  # 这里每个点的方差设置成了完全相同的，可能还是会需要设置不同的方差
+            return W
         elif self.affinity == 'Q':
             # Q 矩阵的相似性
             print('Q')
