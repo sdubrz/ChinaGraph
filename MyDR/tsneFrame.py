@@ -25,7 +25,7 @@ def tsne_plus(P):
     no_dims = 2
     initial_momentum = 0.5
     final_momentum = 0.8
-    eta = 500
+    eta = 1000
     min_gain = 0.01
     Y = np.random.randn(n, no_dims)
     dY = np.zeros((n, no_dims))
