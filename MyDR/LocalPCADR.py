@@ -257,18 +257,23 @@ class LocalPCADR:
 
         # 用经典的降维方法
         if self.affinity == 'PCA':  # 直接返回 PCA 的降维结果
+            print('Classical method: PCA...')
             pca = PCA(n_components=self.n_components)
             return pca.fit_transform(X)
         elif self.affinity == 'MDS':  # 直接返回 MDS 的降维结果
+            print('Classical method: MDS...')
             mds = MDS(n_components=self.n_components)
             return mds.fit_transform(X)
         elif self.affinity == 'Isomap':  # 直接返回 Isomap 的降维结果
+            print('Classical method: Isomap...')
             iso = Isomap(n_components=self.n_components, n_neighbors=self.parameters['n_neighbors'])
             return iso.fit_transform(X)
         elif self.affinity == 't-SNE':  # 直接返回 t-SNE 的降维结果
+            print('Classical method: t-SNE...')
             tsne = TSNE(n_components=self.n_components, perplexity=self.parameters['perplexity'])
             return tsne.fit_transform(X)
         elif self.affinity == 'LLE':  # 直接返回 LLE 的降维结果
+            print('Classical method: LLE...')
             lle = LocallyLinearEmbedding(n_components=self.n_components, n_neighbors=self.parameters['n_neighbors'])
             return lle.fit_transform(X)
 
@@ -293,7 +298,7 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\2plane90\\"
+    path = "E:\\ChinaGraph\\Data\\hybrid\\"
     X = np.loadtxt(path+"data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path+"label.csv", dtype=np.int, delimiter=",")
     (n, m) = X.shape
