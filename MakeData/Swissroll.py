@@ -43,8 +43,47 @@ def swissroll():
     np.savetxt(path + "label.csv", np.ones((n, 1)), fmt='%d', delimiter=",")
     ax = Axes3D(plt.figure())
     ax.scatter(X[:, 0], X[:, 1], X[:, 2])
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.show()
+
+
+def plane():
+    """
+    生成平面的数据，与 swissroll 产生交叉
+    :return:
+    """
+    max_fail = 3000  # 最大失败次数
+
+    data = []
+    points = []
+    loop_count = 0
+    while loop_count < max_fail:
+        x = random.uniform(0, 1) * 20 - 12
+        y = random.uniform(0, 1) * 25 - 10
+        p = [x, y]
+        if DartsSampling.all_far(points, p, radius=0.85):
+            points.append(p)
+            data.append([x, y, 7.0])
+            loop_count = 0
+            if len(points) % 1000 == 0:
+                print(len(points))
+        else:
+            loop_count += 1
+
+    n = len(points)
+    print(n)
+    X = np.array(data)
+
+    np.savetxt(path + "data2.csv", X, fmt='%f', delimiter=",")
+    np.savetxt(path + "label2.csv", 2*np.ones((n, 1)), fmt='%d', delimiter=",")
+    ax = Axes3D(plt.figure())
+    ax.scatter(X[:, 0], X[:, 1], X[:, 2])
+    plt.xlabel('X')
+    plt.ylabel('Y')
     plt.show()
 
 
 if __name__ == '__main__':
-    swissroll()
+    # swissroll()
+    plane()

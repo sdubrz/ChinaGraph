@@ -9,6 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
 from MyDR import tsneFrame
+from MyDR.geoTsne import geoTsne
 
 
 def mahalanobis_distance(A, B):
@@ -99,9 +100,9 @@ def cov_matrix_distance(Cov, distance_type='spectralNorm'):
     (n, m, k) = Cov.shape
     D = np.zeros((n, n))
     for i in range(0, n):
-        for j in range(i+1, n):
+        for j in range(i + 1, n):
             if distance_type == 'spectralNorm':
-                d = np.linalg.norm(Cov[i, :, :]-Cov[j, :, :])
+                d = np.linalg.norm(Cov[i, :, :] - Cov[j, :, :])
             elif distance_type == 'mahalanobis':
                 d = mahalanobis_distance(Cov[i, :, :], Cov[j, :, :])
             else:
@@ -128,6 +129,7 @@ class LocalPCADR:
                         'PCA': 直接返回 PCA的降维结果
                         'Isomap': 直接返回 Isomap 的降维结果
                         'LLE': 直接返回 LLE 的降维结果
+                        'geo-t-SNE': 基于测地线距离的 t-SNE 方法
         :param parameters: 一个参数字典，里面是欧氏距离与 local PCA的权重，下面是几个常用的参数
                         'alpha': 欧氏距离的权重
                         'beta': local PCA 的权重
@@ -135,13 +137,14 @@ class LocalPCADR:
                                             'knn': K近邻方法
                                             'rnn': 设置邻域半径的方法
                         'n_neighbors': 邻域内点的个数，当 neighborhood_type == 'knn' 时有效
-                                        或当 affinity == 'Isomap' || affinity == 'LLE' 时，作为算法所需的参数
+                                        或当 affinity == 'Isomap' || affinity == 'LLE' || affinity == 'geo-t-SNE'
+                                        时，作为算法所需的参数
                         'neighborhood_size': 局部邻域的半径大小，当 neighborhood_type == 'rnn' 时有效
                         'distance_type': 协方差矩阵的距离标准
                                         'spectralNorm': 谱范数，直接使用 numpy.linalg.norm(Matrix)
                                         'mahalanobis': 马氏距离，对差矩阵进行特征值分解，取最大的特征值（假设所有特征值均为非负数）
                         'manifold_dimension': 流形本身的维度
-                        'perplexity': 用 t-SNE 降维时的困惑度
+                        'perplexity': 用 t-SNE 降维时的困惑度，当 affinity == 't-SNE' || affinity == 'geo-t-SNE' 时有效
         :param frame: 迭代求解降维结果时用的框架
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
@@ -168,7 +171,7 @@ class LocalPCADR:
             print("Calculate local covariance matrix using RNN...")
             M = local_cov_rnn(X, self.parameters['neighborhood_size'])
         else:
-            print("Wrong neighborhood_type: "+str(self.parameters['neighborhood_type']))
+            print("Wrong neighborhood_type: " + str(self.parameters['neighborhood_type']))
             return
 
         return M
@@ -202,14 +205,14 @@ class LocalPCADR:
         W = np.zeros((n, n))
         print('Calculate Euclidean distance...')
         Ed = euclidean_distances(X)  # 欧氏距离矩阵
-        Ed = Ed / (np.max(Ed)+1e-15)
+        Ed = Ed / (np.max(Ed) + 1e-15)
 
         if self.affinity == 'cov':
             # 协方差矩阵距离与欧氏距离加权和
             Cov = self.local_cov(X)  # 协方差矩阵
             print('Calculate the spectral distance of local covariance matrix...')
             Cd = cov_matrix_distance(Cov, self.parameters['distance_type'])  # 协方差矩阵之间的谱距离
-            Cd = Cd / (np.max(Cd)+1e-15)
+            Cd = Cd / (np.max(Cd) + 1e-15)
             W = self.parameters["alpha"] * Ed + self.parameters["beta"] * Cd
             return W
         elif self.affinity == 'expCov':
@@ -229,7 +232,7 @@ class LocalPCADR:
             Q = self.Q_matrix(Cov)
             print('Calculate the spectral distance of local projection matrix...')
             Qd = cov_matrix_distance(Q, self.parameters['distance_type'])
-            Qd = Qd / (np.max(Qd)+1e-15)
+            Qd = Qd / (np.max(Qd) + 1e-15)
             W = self.parameters['alpha'] * Ed + self.parameters['beta'] * Qd
             return W
         elif self.affinity == 'expQ':
@@ -276,6 +279,10 @@ class LocalPCADR:
             print('Classical method: LLE...')
             lle = LocallyLinearEmbedding(n_components=self.n_components, n_neighbors=self.parameters['n_neighbors'])
             return lle.fit_transform(X)
+        elif self.affinity == 'geo-t-SNE':  # 用基于测地线距离的 t-SNE 方法
+            print('Geodesic t-SNE...')
+            gtsne = geoTsne(n_neighbors=self.parameters['n_neighbors'], perplexity=self.parameters['perplexity'])
+            return gtsne.fit_transform(X, n_components=self.n_components)
 
         # 用我们自己设计的降维方法
         W = self.affinity_matrix(X)
@@ -298,9 +305,9 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\hybrid\\"
-    X = np.loadtxt(path+"data.csv", dtype=np.float, delimiter=",")
-    label = np.loadtxt(path+"label.csv", dtype=np.int, delimiter=",")
+    path = "E:\\ChinaGraph\\Data\\swissroll\\"
+    X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
+    label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X.shape
 
     # 如果是三维的，则画出三维散点图
@@ -320,15 +327,16 @@ def run_example():
     params['manifold_dimension'] = 2  # the real dimension of manifolds
     params['perplexity'] = 30.0  # perplexity in t-SNE
 
-    affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
-    frame_work = 't-SNE'  # frame 的取值可以为 'MDS'  't-SNE'
+    affinity = 'geo-t-SNE'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
+    # 'geo-t-SNE'
+    frame_work = 'MDS'  # frame 的取值可以为 'MDS'  't-SNE'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work, manifold_dimension=2)
 
     Y = dr.fit_transform(X)
     run_str = ''  # 用于存放结果的文件名
 
     # 经典降维方法的画图
-    classic_methods = ['PCA', 'MDS', 't-SNE', 'Isomap', 'LLE']
+    classic_methods = ['PCA', 'MDS', 't-SNE', 'Isomap', 'LLE', 'geo-t-SNE']
     if affinity in classic_methods:
         plt.scatter(Y[:, 0], Y[:, 1], c=label)
         ax = plt.gca()
@@ -338,6 +346,8 @@ def run_example():
             title_str = title_str + " perplexity=" + str(params['perplexity'])
         elif affinity == 'Isomap' or affinity == 'LLE':
             title_str = title_str + ' n_neighbors=' + str(params['n_neighbors'])
+        elif affinity == 'geo-t-SNE':
+            title_str = title_str + 'n_neighbors=' + str(params['n_neighbors']) + ' perplexity=' + str(params['perplexity'])
         plt.title(title_str)
         run_str = title_str
     else:
@@ -345,15 +355,16 @@ def run_example():
         plt.scatter(Y[:, 0], Y[:, 1], c=label)
         ax = plt.gca()
         ax.set_aspect(1)
-        title_str = 'Frame[' + frame_work + '] ' + affinity + ' alpha=' + str(params['alpha']) + ' beta=' + str(params['beta'])
+        title_str = 'Frame[' + frame_work + '] ' + affinity + ' alpha=' + str(params['alpha']) + ' beta=' + str(
+            params['beta'])
         if params['neighborhood_type'] == 'knn':
             title_str = title_str + ' k=' + str(params['n_neighbors'])
         elif params['neighborhood_type'] == 'rnn':
             title_str = title_str + ' r=' + str(params['neighborhood_size'])
         plt.title(title_str)
         run_str = title_str
-    np.savetxt(path+run_str+".csv", Y, fmt='%.18e', delimiter=",")
-    plt.savefig(path+run_str+".png")
+    np.savetxt(path + run_str + ".csv", Y, fmt='%.18e', delimiter=",")
+    plt.savefig(path + run_str + ".png")
     plt.show()
 
 
