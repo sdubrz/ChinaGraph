@@ -145,6 +145,7 @@ class LocalPCADR:
                                         'mahalanobis': 马氏距离，对差矩阵进行特征值分解，取最大的特征值（假设所有特征值均为非负数）
                         'manifold_dimension': 流形本身的维度
                         'perplexity': 用 t-SNE 降维时的困惑度，当 affinity == 't-SNE' || affinity == 'geo-t-SNE' 时有效
+                                    当 frame == 't-SNE' 时，用于控制方差大小
         :param frame: 迭代求解降维结果时用的框架
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
@@ -293,7 +294,7 @@ class LocalPCADR:
             return Y
         elif self.frame == 't-SNE':
             print('Using t-SNE frame...')
-            Y = tsneFrame.tsne_plus(W)
+            Y = tsneFrame.tsne_plus(W, self.parameters['perplexity'])
             return Y
         else:
             print("Wrong frame name!")
@@ -305,7 +306,7 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\swissroll\\"
+    path = "E:\\ChinaGraph\\Data\\2plane90\\"
     X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X.shape
@@ -321,15 +322,15 @@ def run_example():
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 1.0  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.5  # the weight of euclidean distance
+    params['alpha'] = 0.7  # the weight of euclidean distance
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
     params['perplexity'] = 30.0  # perplexity in t-SNE
 
-    affinity = 'geo-t-SNE'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
+    affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
     # 'geo-t-SNE'
-    frame_work = 'MDS'  # frame 的取值可以为 'MDS'  't-SNE'
+    frame_work = 't-SNE'  # frame 的取值可以为 'MDS'  't-SNE'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work, manifold_dimension=2)
 
     Y = dr.fit_transform(X)
@@ -361,6 +362,8 @@ def run_example():
             title_str = title_str + ' k=' + str(params['n_neighbors'])
         elif params['neighborhood_type'] == 'rnn':
             title_str = title_str + ' r=' + str(params['neighborhood_size'])
+        if frame_work == 't-SNE':
+            title_str = title_str + " perplexity=" + str(params['perplexity'])
         plt.title(title_str)
         run_str = title_str
     np.savetxt(path + run_str + ".csv", Y, fmt='%.18e', delimiter=",")

@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-# t-SNE求解降维结果的框架
-# 需要从外部输入计算好的概率矩阵，然后执行t-SNE的迭代过程
+# t-SNE 所有的点都用相同的方差试一下
 
 
 def Hbeta(D=np.array([]), beta=1.0):
@@ -18,20 +17,43 @@ def Hbeta(D=np.array([]), beta=1.0):
     return H, P
 
 
-def d2p(D=np.array([]), tol=1e-5, perplexity=30.0):
+def x2p(X=np.array([]), beta=np.array([])):
     """
-    根据距离矩阵，计算概率
-    :param D:
-    :param tol:
-    :param perplexity:
+    计算概率，假设概率已经提前计算好了
+    :param X:
+    :param beta:
     :return:
     """
-    (n, n1) = D.shape
-    D = D ** 2
+    print('Computing P...')
+    (n, d) = X.shape
+    sum_X = np.sum(np.square(X), 1)
+    D = np.add(np.add(-2 * np.dot(X, X.T), sum_X).T, sum_X)
+    P = np.zeros((n, n))
+
+    for i in range(n):
+        Di = D[i, np.concatenate((np.r_[0:i], np.r_[i + 1:n]))]
+        (H, thisP) = Hbeta(Di, beta[i])
+        P[i, np.concatenate((np.r_[0:i], np.r_[i + 1:n]))] = thisP
+
+    return P
+
+
+def x2p0(X=np.array([]), tol=1e-5, perplexity=30.0):
+    """
+        Performs a binary search to get P-values in such a way that each
+        conditional Gaussian has the same perplexity.
+    """
+
+    # Initialize some variables
+    print("Computing pairwise distances...")
+    (n, d) = X.shape
+    sum_X = np.sum(np.square(X), 1)
+    D = np.add(np.add(-2 * np.dot(X, X.T), sum_X).T, sum_X)
     P = np.zeros((n, n))
     beta = np.ones((n, 1))
     logU = np.log(perplexity)
 
+    # Loop over all datapoints
     for i in range(n):
 
         # Print progress
@@ -76,38 +98,61 @@ def d2p(D=np.array([]), tol=1e-5, perplexity=30.0):
     return P
 
 
-def tsne_plus(D, perplexity=30.0):
+def pca(X=np.array([]), no_dims=50):
     """
-    根据计算好的概率矩阵，执行t-SNE迭代算法
-    :param D: 距离矩阵
-    :param perplexity:
-    :return:
+        Runs PCA on the NxD array X in order to reduce its dimensionality to
+        no_dims dimensions.
     """
-    (n, m) = D.shape
-    if n != m:
-        print("Error: matrix D must be a square matrix")
+
+    print("Preprocessing the data using PCA...")
+    (n, d) = X.shape
+    X = X - np.tile(np.mean(X, 0), (n, 1))
+    (l, M) = np.linalg.eig(np.dot(X.T, X))
+    Y = np.dot(X, M[:, 0:no_dims])
+    return Y
+
+
+def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
+    """
+        Runs t-SNE on the dataset in the NxD array X to reduce its
+        dimensionality to no_dims dimensions. The syntaxis of the function is
+        `Y = tsne.tsne(X, no_dims, perplexity), where X is an NxD NumPy array.
+    """
+
+    # Check inputs
+    if isinstance(no_dims, float):
+        print("Error: array X should have type float.")
+        return -1
+    if round(no_dims) != no_dims:
+        print("Error: number of dimensions should be an integer.")
         return -1
 
-    # 对 P 进行必要的规范化
-    P = d2p(D, perplexity=perplexity)
-    P = P + np.transpose(P)
-    P = P / np.sum(P)
-    P = P * 4.  # early exaggeration
-    P = np.maximum(P, 1e-12)
-
+    # Initialize variables
+    X = pca(X, initial_dims).real
+    (n, d) = X.shape
     max_iter = 1000
-    no_dims = 2
     initial_momentum = 0.5
     final_momentum = 0.8
-    eta = 1000
+    eta = 500
     min_gain = 0.01
     Y = np.random.randn(n, no_dims)
     dY = np.zeros((n, no_dims))
     iY = np.zeros((n, no_dims))
     gains = np.ones((n, no_dims))
 
-    # iterations
+    # Compute P-values
+    P = x2p0(X, 1e-5, perplexity)
+    # beta = np.ones((n, 1)) * 0.1
+    # P = x2p(X, beta)
+    P = P + np.transpose(P)
+    P = P / np.sum(P)
+    P = P * 4.									# early exaggeration
+    P = np.maximum(P, 1e-12)
+
+    # Run iterations
     for iter in range(max_iter):
+
+        # Compute pairwise affinities
         sum_Y = np.sum(np.square(Y), 1)
         num = -2. * np.dot(Y, Y.T)
         num = 1. / (1. + np.add(np.add(num, sum_Y).T, sum_Y))
@@ -141,5 +186,19 @@ def tsne_plus(D, perplexity=30.0):
         if iter == 100:
             P = P / 4.
 
+    # Return solution
     return Y
+
+
+if __name__ == '__main__':
+    path = "E:\\ChinaGraph\\Data\\digits5_8\\"
+    X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
+    X = X / np.max(X)
+    label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
+    (n, m) = X.shape
+
+    Y = tsne(X)
+    plt.scatter(Y[:, 0], Y[:, 1], c=label)
+    plt.show()
+
 
