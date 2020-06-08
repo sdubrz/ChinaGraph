@@ -306,7 +306,7 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\2plane90\\"
+    path = "E:\\ChinaGraph\\Data\\hybrid2\\"
     X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X.shape
@@ -322,7 +322,7 @@ def run_example():
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 1.0  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.7  # the weight of euclidean distance
+    params['alpha'] = 0.5  # the weight of euclidean distance
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
@@ -330,7 +330,7 @@ def run_example():
 
     affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
     # 'geo-t-SNE'
-    frame_work = 't-SNE'  # frame 的取值可以为 'MDS'  't-SNE'
+    frame_work = 'MDS'  # frame 的取值可以为 'MDS'  't-SNE'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work, manifold_dimension=2)
 
     Y = dr.fit_transform(X)
