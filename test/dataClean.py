@@ -90,6 +90,12 @@ def d3_test():
     plt.show()
 
 
+def memory_test():
+    A = np.ones((2500, 50, 50)) * 0.5
+    print(A.shape)
+
+
 if __name__ == '__main__':
     # linear_test()
-    d3_test()
+    # d3_test()
+    memory_test()

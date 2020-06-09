@@ -35,6 +35,7 @@ def local_cov_knn(X, n_neighbors):
     :return:
     """
     (n, m) = X.shape
+    print(X.shape)
     M = np.zeros((n, m, m))
 
     nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree').fit(X)
@@ -376,7 +377,7 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\Iris3\\"
+    path = "E:\\ChinaGraph\\Data\\MNIST2500d50\\"
     X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X.shape
@@ -390,13 +391,13 @@ def run_example():
 
     params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
-    params['n_neighbors'] = 7  # Only used when neighborhood_type is 'knn'
+    params['n_neighbors'] = 50  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 1.0  # Only used when neighborhood_type is 'rnn'
     params['alpha'] = 0.5  # the weight of euclidean distance
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
-    params['manifold_dimension'] = 2  # the real dimension of manifolds
-    params['perplexity'] = 20.0  # perplexity in t-SNE
+    params['manifold_dimension'] = 3  # the real dimension of manifolds
+    params['perplexity'] = 30.0  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
 
     affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
@@ -428,7 +429,7 @@ def run_example():
         ax = plt.gca()
         ax.set_aspect(1)
         title_str = 'Frame[' + frame_work + '] ' + affinity + ' alpha=' + str(params['alpha']) + ' beta=' + str(
-            params['beta'])
+            params['beta']) + ' manifold_dimension=' + str(params['manifold_dimension'])
         if params['neighborhood_type'] == 'knn':
             title_str = title_str + ' k=' + str(params['n_neighbors'])
         elif params['neighborhood_type'] == 'rnn':
@@ -436,7 +437,7 @@ def run_example():
         if frame_work == 't-SNE':
             title_str = title_str + " perplexity=" + str(params['perplexity'])
         if params['neighborhood_type'] == 'iter':
-            title_str = title_str + 'distanceIter=' + str(params['MAX_Distance_iter'])
+            title_str = title_str + ' distanceIter=' + str(params['MAX_Distance_iter'])
         plt.title(title_str)
         run_str = title_str
     np.savetxt(path + run_str + ".csv", Y, fmt='%.18e', delimiter=",")
