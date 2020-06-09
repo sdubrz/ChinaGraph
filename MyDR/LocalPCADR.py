@@ -10,6 +10,7 @@ from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
 from MyDR import tsneFrame
 from MyDR.geoTsne import geoTsne
+from MyDR import distanceIter
 
 
 def mahalanobis_distance(A, B):
@@ -38,10 +39,26 @@ def local_cov_knn(X, n_neighbors):
 
     nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree').fit(X)
     distance, knn = nbrs.kneighbors(X)
+    M = local_cov_by_knn(X, knn)
+
+    return M
+
+
+def local_cov_by_knn(X, knn):
+    """
+    在已知 KNN的情况下计算，local covariance matrix
+    :param X: 高维数据矩阵，每一行是一个点
+    :param knn: K近邻关系矩阵
+    :return:
+    """
+    (n, m) = X.shape
+    M = np.zeros((n, m, m))
+    (n2, n_neighbors) = knn.shape
+
     for i in range(0, n):
         local_data = np.zeros((n_neighbors, m))
         for j in range(0, n_neighbors):
-            local_data[j, :] = X[knn[i, j], :]
+            local_data[j, :] = X[int(knn[i, j]), :]
         local_mean = np.mean(local_data, axis=0)
         local_data = local_data - local_mean
         Ci = np.matmul(local_data.T, local_data) / n_neighbors
@@ -136,6 +153,7 @@ class LocalPCADR:
                         'neighborhood_type': 计算邻居的方式
                                             'knn': K近邻方法
                                             'rnn': 设置邻域半径的方法
+                                            'iter': 用迭代的方式确定邻居，计算距离矩阵
                         'n_neighbors': 邻域内点的个数，当 neighborhood_type == 'knn' 时有效
                                         或当 affinity == 'Isomap' || affinity == 'LLE' || affinity == 'geo-t-SNE'
                                         时，作为算法所需的参数
@@ -146,6 +164,7 @@ class LocalPCADR:
                         'manifold_dimension': 流形本身的维度
                         'perplexity': 用 t-SNE 降维时的困惑度，当 affinity == 't-SNE' || affinity == 'geo-t-SNE' 时有效
                                     当 frame == 't-SNE' 时，用于控制方差大小
+                        'MAX_Distance_iter': 迭代式计算距离矩阵时，最多的迭代次数
         :param frame: 迭代求解降维结果时用的框架
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
@@ -165,12 +184,14 @@ class LocalPCADR:
         (n, m) = X.shape
         M = np.zeros((n, m, m))
 
-        if self.parameters['neighborhood_type'] == 'knn':
+        if self.parameters['neighborhood_type'] == 'knn' or self.parameters['neighborhood_type'] == 'iter':
             print("Calculate local covariance matrix using KNN...")
             M = local_cov_knn(X, self.parameters['n_neighbors'])
         elif self.parameters['neighborhood_type'] == 'rnn':
             print("Calculate local covariance matrix using RNN...")
             M = local_cov_rnn(X, self.parameters['neighborhood_size'])
+        # elif self.parameters['neighborhood_type'] == 'distanceKNN':
+        #     print('迭代计算')
         else:
             print("Wrong neighborhood_type: " + str(self.parameters['neighborhood_type']))
             return
@@ -195,6 +216,52 @@ class LocalPCADR:
                 Q[i, :, :] = np.outer(U[:, 0], U[:, 0])
 
         return Q
+
+    def iter_affinity_matrix(self, X):
+        """
+        迭代式的方式计算距离关系
+        :param X: 高维数据矩阵
+        :return:
+        """
+        W = self.affinity_matrix(X)
+        euclidean = euclidean_distances(X)
+        count = 1
+        knn = distanceIter.neighbors_by_distance(W, self.parameters['n_neighbors'])
+        while count < self.parameters['MAX_Distance_iter']:
+            Cov = local_cov_by_knn(X, knn)
+            W = self.affinity_matrix_sub(euclidean, Cov)
+            knn2 = distanceIter.neighbors_by_distance(W, self.parameters['n_neighbors'])
+            count += 1
+            if distanceIter.knn_equals(knn, knn2):
+                break
+            else:
+                knn = knn2.copy()
+        return W
+
+    def affinity_matrix_sub(self, euclidean, Cov):
+        """
+        根据欧氏距离矩阵与local PCA相似度矩阵计算每个点之间的相似性
+        :param euclidean: 欧氏距离矩阵
+        :param Cov: 里面存储的是每个点的 local covariance matrix
+        :return:
+        """
+        (n, n1) = euclidean.shape
+        if self.affinity == 'cov':
+            print('Calculate the spectral distance of local covariance matrix...')
+            Cd = cov_matrix_distance(Cov, self.parameters['distance_type'])  # 协方差矩阵之间的谱距离
+            Cd = Cd / (np.max(Cd) + 1e-15)
+            W = self.parameters["alpha"] * euclidean + self.parameters["beta"] * Cd
+            return W
+        elif self.affinity == 'Q':
+            Q = self.Q_matrix(Cov)
+            print('Calculate the spectral distance of local projection matrix...')
+            Qd = cov_matrix_distance(Q, self.parameters['distance_type'])
+            Qd = Qd / (np.max(Qd) + 1e-15)
+            W = self.parameters['alpha'] * euclidean + self.parameters['beta'] * Qd
+            return W
+        else:
+            print('暂不支持该方法')
+            return
 
     def affinity_matrix(self, X):
         """
@@ -286,7 +353,10 @@ class LocalPCADR:
             return gtsne.fit_transform(X, n_components=self.n_components)
 
         # 用我们自己设计的降维方法
-        W = self.affinity_matrix(X)
+        if self.parameters['neighborhood_type'] == 'iter':  # 用迭代的方式
+            W = self.iter_affinity_matrix(X)
+        else:
+            W = self.affinity_matrix(X)
         if self.frame == 'MDS':
             print('Using MDS frame...')
             mds = MDS(n_components=self.n_components, dissimilarity='precomputed')
@@ -319,7 +389,7 @@ def run_example():
         plt.show()
 
     params = {}
-    params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn'
+    params['neighborhood_type'] = 'iter'  # 'knn' or 'rnn' or 'iter'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 1.0  # Only used when neighborhood_type is 'rnn'
     params['alpha'] = 0.5  # the weight of euclidean distance
@@ -327,6 +397,7 @@ def run_example():
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
     params['perplexity'] = 30.0  # perplexity in t-SNE
+    params['MAX_Distance_iter'] = 10  # max iter of distance computing
 
     affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
     # 'geo-t-SNE'
@@ -364,6 +435,8 @@ def run_example():
             title_str = title_str + ' r=' + str(params['neighborhood_size'])
         if frame_work == 't-SNE':
             title_str = title_str + " perplexity=" + str(params['perplexity'])
+        if params['neighborhood_type'] == 'iter':
+            title_str = title_str + 'distanceIter=' + str(params['MAX_Distance_iter'])
         plt.title(title_str)
         run_str = title_str
     np.savetxt(path + run_str + ".csv", Y, fmt='%.18e', delimiter=",")
