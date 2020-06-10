@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from sklearn.manifold import MDS
 from sklearn.manifold import TSNE
 from sklearn.manifold import Isomap
@@ -11,6 +10,7 @@ from sklearn.neighbors import NearestNeighbors
 from MyDR import tsneFrame
 from MyDR.geoTsne import geoTsne
 from MyDR import distanceIter
+from MyDR import skeletonMethod
 
 
 def mahalanobis_distance(A, B):
@@ -166,6 +166,7 @@ class LocalPCADR:
                         'perplexity': 用 t-SNE 降维时的困惑度，当 affinity == 't-SNE' || affinity == 'geo-t-SNE' 时有效
                                     当 frame == 't-SNE' 时，用于控制方差大小
                         'MAX_Distance_iter': 迭代式计算距离矩阵时，最多的迭代次数
+                        'use_skeleton': 是否使用骨架点的方法，取值为 True 或 False
         :param frame: 迭代求解降维结果时用的框架
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
@@ -264,10 +265,11 @@ class LocalPCADR:
             print('暂不支持该方法')
             return
 
-    def affinity_matrix(self, X):
+    def affinity_matrix(self, X, Cov=None):
         """
         计算 affinity 矩阵
         :param X: 高维数据矩阵，每一行是一个高维数据点
+        :param Cov: 张量，存储每个点的协方差矩阵。如果不是 None，需要重新计算
         :return:
         """
         (n, m) = X.shape
@@ -278,7 +280,8 @@ class LocalPCADR:
 
         if self.affinity == 'cov':
             # 协方差矩阵距离与欧氏距离加权和
-            Cov = self.local_cov(X)  # 协方差矩阵
+            if Cov is None:
+                Cov = self.local_cov(X)  # 协方差矩阵
             print('Calculate the spectral distance of local covariance matrix...')
             Cd = cov_matrix_distance(Cov, self.parameters['distance_type'])  # 协方差矩阵之间的谱距离
             Cd = Cd / (np.max(Cd) + 1e-15)
@@ -287,7 +290,8 @@ class LocalPCADR:
         elif self.affinity == 'expCov':
             # 综合考虑协方差矩阵的距离与欧氏距离，然后用 exp 函数加工
             # 协方差矩阵距离与欧氏距离加权和
-            Cov = self.local_cov(X)  # 协方差矩阵
+            if Cov is None:
+                Cov = self.local_cov(X)  # 协方差矩阵
             print('Calculate the spectral distance of local covariance matrix...')
             Cd = cov_matrix_distance(Cov, self.parameters['distance_type'])  # 协方差矩阵之间的谱距离
             Cd = Cd / (np.max(Cd) + 1e-15)
@@ -296,7 +300,8 @@ class LocalPCADR:
             return W
         elif self.affinity == 'Q':
             # Q 矩阵的相似性 加上 欧氏距离的相似性
-            Cov = self.local_cov(X)  # 协方差矩阵
+            if Cov is None:
+                Cov = self.local_cov(X)  # 协方差矩阵
             print('Calculate Q matrix...')
             Q = self.Q_matrix(Cov)
             print('Calculate the spectral distance of local projection matrix...')
@@ -306,7 +311,8 @@ class LocalPCADR:
             return W
         elif self.affinity == 'expQ':
             # 综合考虑投影矩阵 Q 与欧氏距离，然后用 exp 函数进行加工
-            Cov = self.local_cov(X)  # 协方差矩阵
+            if Cov is None:
+                Cov = self.local_cov(X)  # 协方差矩阵
             print('Calculate Q matrix...')
             Q = self.Q_matrix(Cov)
             print('Calculate the spectral distance of local projection matrix...')
@@ -317,6 +323,45 @@ class LocalPCADR:
             return W
 
         return W
+
+    def skeleton_fit_transform(self, X):
+        """
+        使用骨架点的计算
+        :param X: 高维数据矩阵，每一行是一个高维数据点
+        :return:
+        """
+        (n, m) = X.shape
+        print(self.parameters)
+
+        skeleton, satellite, skeleton_label = skeletonMethod.get_skeleton(X,
+                                                            neighborhood_type=self.parameters['neighborhood_type'],
+                                                          n_neighbors=self.parameters['n_neighbors'],
+                                                          neighborhood_size=self.parameters['neighborhood_size'], label=None)
+        print('Use skeleton method, there are ' + str(n) + ' points in total, and ' + str(len(skeleton))
+              + ' are skeleton points.')
+        Cov = skeletonMethod.get_skeleton_cov(X, satellite)  # 每个骨架点的协方差矩阵
+        skeleton_X = np.zeros((len(skeleton), m))
+        index = 0
+        for s in skeleton:
+            skeleton_X[index, :] = X[s, :]
+            index = index + 1
+        W = self.affinity_matrix(skeleton_X, Cov)  # 骨架点之间的距离度量
+
+        skeleton_Y = np.zeros((len(skeleton), self.n_components))  # 骨架点的降维结果
+        if self.frame == 'MDS':
+            print('Using MDS frame...')
+            mds = MDS(n_components=self.n_components, dissimilarity='precomputed')
+            skeleton_Y = mds.fit_transform(W)
+        elif self.frame == 't-SNE':
+            print('Using t-SNE frame...')
+            skeleton_Y = tsneFrame.tsne_plus(W, self.parameters['perplexity'])
+        else:
+            print("Wrong frame name!")
+            return
+        self.skeleton_Y = skeleton_Y  # 这里保存一下，用于画骨架点的坐标看看
+
+        Y = skeletonMethod.satellite_location(X, skeleton, skeleton_Y)  # 所有点的降维结果
+        return Y
 
     def fit_transform(self, X):
         """
@@ -353,11 +398,14 @@ class LocalPCADR:
             gtsne = geoTsne(n_neighbors=self.parameters['n_neighbors'], perplexity=self.parameters['perplexity'])
             return gtsne.fit_transform(X, n_components=self.n_components)
 
+        if self.parameters['use_skeleton']:  # 用骨架点的方法
+            return self.skeleton_fit_transform(X)
+
         # 用我们自己设计的降维方法
         if self.parameters['neighborhood_type'] == 'iter':  # 用迭代的方式
             W = self.iter_affinity_matrix(X)
         else:
-            W = self.affinity_matrix(X)
+            W = self.affinity_matrix(X)  # 用我们的普通方法
         if self.frame == 'MDS':
             print('Using MDS frame...')
             mds = MDS(n_components=self.n_components, dissimilarity='precomputed')
@@ -372,78 +420,3 @@ class LocalPCADR:
             return
 
 
-def run_example():
-    """
-    一个使用 local PCA 降维方法的示例
-    :return:
-    """
-    path = "E:\\ChinaGraph\\Data\\paraboloids2000\\"
-    X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
-    label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
-    (n, m) = X.shape
-
-    # 如果是三维的，则画出三维散点图
-    if m == 3:
-        ax3d = Axes3D(plt.figure())
-        ax3d.scatter(X[:, 0], X[:, 1], X[:, 2], c=label)
-        plt.title('original data')
-        plt.show()
-
-    params = {}
-    params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
-    params['n_neighbors'] = 5  # Only used when neighborhood_type is 'knn'
-    params['neighborhood_size'] = 1.0  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.5  # the weight of euclidean distance
-    params['beta'] = 1 - params['alpha']  # the weight of local PCA
-    params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
-    params['manifold_dimension'] = 2  # the real dimension of manifolds
-    params['perplexity'] = 30.0  # perplexity in t-SNE
-    params['MAX_Distance_iter'] = 10  # max iter of distance computing
-
-    affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
-    # 'geo-t-SNE'
-    frame_work = 't-SNE'  # frame 的取值可以为 'MDS'  't-SNE'
-    dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work, manifold_dimension=2)
-
-    Y = dr.fit_transform(X)
-    run_str = ''  # 用于存放结果的文件名
-
-    # 经典降维方法的画图
-    classic_methods = ['PCA', 'MDS', 't-SNE', 'Isomap', 'LLE', 'geo-t-SNE']
-    if affinity in classic_methods:
-        plt.scatter(Y[:, 0], Y[:, 1], c=label)
-        ax = plt.gca()
-        ax.set_aspect(1)
-        title_str = affinity
-        if affinity == 't-SNE':
-            title_str = title_str + " perplexity=" + str(params['perplexity'])
-        elif affinity == 'Isomap' or affinity == 'LLE':
-            title_str = title_str + ' n_neighbors=' + str(params['n_neighbors'])
-        elif affinity == 'geo-t-SNE':
-            title_str = title_str + 'n_neighbors=' + str(params['n_neighbors']) + ' perplexity=' + str(params['perplexity'])
-        plt.title(title_str)
-        run_str = title_str
-    else:
-        # 我们的降维方法的画图
-        plt.scatter(Y[:, 0], Y[:, 1], c=label)
-        ax = plt.gca()
-        ax.set_aspect(1)
-        title_str = 'Frame[' + frame_work + '] ' + affinity + ' alpha=' + str(params['alpha']) + ' beta=' + str(
-            params['beta']) + ' manifold_dimension=' + str(params['manifold_dimension'])
-        if params['neighborhood_type'] == 'knn':
-            title_str = title_str + ' k=' + str(params['n_neighbors'])
-        elif params['neighborhood_type'] == 'rnn':
-            title_str = title_str + ' r=' + str(params['neighborhood_size'])
-        if frame_work == 't-SNE':
-            title_str = title_str + " perplexity=" + str(params['perplexity'])
-        if params['neighborhood_type'] == 'iter':
-            title_str = title_str + ' distanceIter=' + str(params['MAX_Distance_iter'])
-        plt.title(title_str)
-        run_str = title_str
-    np.savetxt(path + run_str + ".csv", Y, fmt='%.18e', delimiter=",")
-    plt.savefig(path + run_str + ".png")
-    plt.show()
-
-
-if __name__ == '__main__':
-    run_example()

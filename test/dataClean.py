@@ -95,7 +95,28 @@ def memory_test():
     print(A.shape)
 
 
+def set_test():
+    # A = {x for x in range(10)}
+    # print(A)
+    # for i in range(0, 10):
+    #     print(A.pop())
+    A = set()
+    for i in range(10):
+        A.add(i)
+    print(A)
+    for i in range(10):
+        print(A.pop())
+
+
+def random_test():
+    import random
+    for i in range(0, 100):
+        print(random.randint(0, 100))
+
+
 if __name__ == '__main__':
     # linear_test()
     # d3_test()
-    memory_test()
+    # memory_test()
+    # set_test()
+    random_test()
