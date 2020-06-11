@@ -18,14 +18,15 @@ def get_skeleton(X, neighborhood_type='knn', n_neighbors=8, neighborhood_size=0.
     :return: skeleton 骨架点的索引
             satellite 每个骨架点周围的点
             ##### skeleton_label 记录骨架点标签的 list，当 label is None 时，直接返回 None
+            # 当前的数据结构来看，这个骨架点的 label 不好筛选出来
     """
     (n, d) = X.shape
     skeleton = []  # 骨架点的索引
     satellite = []  # 记录每个骨架点周围都有哪些点
     skeleton_label = None  # 记录骨架点的标签
-    if not (label is None):
-        skeleton_label = []
-    selected = np.zeros((n, 1))  # 记录该点是否被选中过
+    # if not (label is None):
+    #     skeleton_label = []
+    # selected = np.zeros((n, 1))  # 记录该点是否被选中过
 
     neighbor_lists = []
     if neighborhood_type == 'knn':
@@ -38,7 +39,7 @@ def get_skeleton(X, neighborhood_type='knn', n_neighbors=8, neighborhood_size=0.
         neighbor_lists = rnn
 
     rest = {x for x in range(n)}  # 剩余的没有选中的点
-    rest, total_label = random_disruption(rest, label)
+    rest, total_label = random_disruption(rest, label)  # 随机打散
     while len(rest) > 0:
         current = rest.pop()  # 这种方法貌似不是随机的
         neighbors = neighbor_lists[current]
@@ -48,7 +49,7 @@ def get_skeleton(X, neighborhood_type='knn', n_neighbors=8, neighborhood_size=0.
             if p in rest:
                 rest.remove(p)
 
-    return skeleton, satellite, skeleton_label
+    return skeleton, satellite
 
 
 def random_disruption(index_set0, label0=None):

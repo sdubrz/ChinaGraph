@@ -28,17 +28,17 @@ def run_example():
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 1.0  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.5  # the weight of euclidean distance
+    params['alpha'] = 0.9  # the weight of euclidean distance
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
     params['perplexity'] = 30.0  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
-    params['use_skeleton'] = True  # boolean value. Whether use skeleton method.
+    params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
 
     affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
     # 'geo-t-SNE'
-    frame_work = 't-SNE'  # frame 的取值可以为 'MDS'  't-SNE'
+    frame_work = 't-SNE+'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work, manifold_dimension=2)
 
     Y = dr.fit_transform(X)

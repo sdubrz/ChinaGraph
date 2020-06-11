@@ -11,6 +11,7 @@ from MyDR import tsneFrame
 from MyDR.geoTsne import geoTsne
 from MyDR import distanceIter
 from MyDR import skeletonMethod
+from MyDR import tsneFramePlus
 
 
 def mahalanobis_distance(A, B):
@@ -170,12 +171,14 @@ class LocalPCADR:
         :param frame: 迭代求解降维结果时用的框架
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
+                            't-SNE+': 使用 sklearn 中的加速版 t-SNE 求解
         :param manifold_dimension: 流形本身的维度数
         """
         self.n_components = n_components
         self.affinity = affinity
         self.parameters = parameters
         self.frame = frame
+        self.skeleton_Y = None  # 骨架点的降维结果
 
     def local_cov(self, X):
         """
@@ -333,10 +336,11 @@ class LocalPCADR:
         (n, m) = X.shape
         print(self.parameters)
 
-        skeleton, satellite, skeleton_label = skeletonMethod.get_skeleton(X,
-                                                            neighborhood_type=self.parameters['neighborhood_type'],
+        skeleton, satellite = skeletonMethod.get_skeleton(X,
+                                                          neighborhood_type=self.parameters['neighborhood_type'],
                                                           n_neighbors=self.parameters['n_neighbors'],
-                                                          neighborhood_size=self.parameters['neighborhood_size'], label=None)
+                                                          neighborhood_size=self.parameters['neighborhood_size'],
+                                                          label=None)
         print('Use skeleton method, there are ' + str(n) + ' points in total, and ' + str(len(skeleton))
               + ' are skeleton points.')
         Cov = skeletonMethod.get_skeleton_cov(X, satellite)  # 每个骨架点的协方差矩阵
@@ -355,6 +359,11 @@ class LocalPCADR:
         elif self.frame == 't-SNE':
             print('Using t-SNE frame...')
             skeleton_Y = tsneFrame.tsne_plus(W, self.parameters['perplexity'])
+        elif self.frame == 't-SNE+':
+            print('Using t-SNE framework in sklearn...')
+            tsne = tsneFramePlus.tsnePlus(n_components=self.n_components, perplexity=self.parameters['perplexity'])
+            Y = tsne.fit_transform(W)
+            return Y
         else:
             print("Wrong frame name!")
             return
@@ -415,8 +424,11 @@ class LocalPCADR:
             print('Using t-SNE frame...')
             Y = tsneFrame.tsne_plus(W, self.parameters['perplexity'])
             return Y
+        elif self.frame == 't-SNE+':
+            print('Using t-SNE framework in sklearn...')
+            tsne = tsneFramePlus.tsnePlus(n_components=self.n_components, perplexity=self.parameters['perplexity'])
+            Y = tsne.fit_transform(W)
+            return Y
         else:
             print("Wrong frame name!")
             return
-
-
