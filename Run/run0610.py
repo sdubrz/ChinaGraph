@@ -12,7 +12,7 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\dolarsign5000\\"
+    path = "E:\\ChinaGraph\\Data\\coil3cars\\"
     X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X.shape
@@ -26,12 +26,12 @@ def run_example():
 
     params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
-    params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
+    params['n_neighbors'] = 3  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 1.0  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.95  # the weight of euclidean distance
+    params['alpha'] = 0.9  # the weight of euclidean distance
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
-    params['manifold_dimension'] = 2  # the real dimension of manifolds
+    params['manifold_dimension'] = 1  # the real dimension of manifolds
     params['perplexity'] = 30.0  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
@@ -79,7 +79,7 @@ def run_example():
             title_str = title_str + ' k=' + str(params['n_neighbors'])
         elif params['neighborhood_type'] == 'rnn':
             title_str = title_str + ' r=' + str(params['neighborhood_size'])
-        if frame_work == 't-SNE':
+        if frame_work == 't-SNE' or frame_work == 't-SNE+':
             title_str = title_str + " perplexity=" + str(params['perplexity'])
         if params['neighborhood_type'] == 'iter':
             title_str = title_str + ' distanceIter=' + str(params['MAX_Distance_iter'])
