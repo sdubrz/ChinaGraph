@@ -12,7 +12,7 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\coil3cars\\"
+    path = "E:\\ChinaGraph\\Data\\coil4class\\"
     X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X.shape
@@ -26,9 +26,9 @@ def run_example():
 
     params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
-    params['n_neighbors'] = 3  # Only used when neighborhood_type is 'knn'
+    params['n_neighbors'] = 15  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 1.0  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.9  # the weight of euclidean distance
+    params['alpha'] = 0.8  # the weight of euclidean distance
     params['beta'] = 1 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 1  # the real dimension of manifolds
