@@ -18,6 +18,7 @@ def swissroll():
     data = []
     points = []
     loop_count = 0
+    color_bar = []  # 用于画渐变颜色的数值
     while loop_count < max_fail:
         t = random.uniform(0, 1)
         t = t * np.pi * 3 + np.pi
@@ -29,6 +30,7 @@ def swissroll():
             temp_x = t * np.sin(t)
             temp_y = t * np.cos(t)
             data.append([temp_x, temp_y, temp_z])
+            color_bar.append(t)
             loop_count = 0
             if len(points) % 1000 == 0:
                 print(len(points))
@@ -38,9 +40,13 @@ def swissroll():
     n = len(points)
     print(n)
     X = np.array(data)
+    bars = np.zeros((n, 1))
+    for i in range(0, n):
+        bars[i] = color_bar[i]
 
     np.savetxt(path + "data.csv", X, fmt='%f', delimiter=",")
     np.savetxt(path + "label.csv", np.ones((n, 1)), fmt='%d', delimiter=",")
+    np.savetxt(path + "bars.csv", bars, fmt='%f', delimiter=",")
     ax = Axes3D(plt.figure())
     ax.scatter(X[:, 0], X[:, 1], X[:, 2])
     plt.xlabel('X')
@@ -59,8 +65,8 @@ def plane():
     points = []
     loop_count = 0
     while loop_count < max_fail:
-        x = random.uniform(0, 1) * 20 - 12
-        y = random.uniform(0, 1) * 25 - 10
+        x = random.uniform(0, 1) * 28 - 14
+        y = random.uniform(0, 1) * 28 - 14
         p = [x, y]
         if DartsSampling.all_far(points, p, radius=0.85):
             points.append(p)
@@ -85,5 +91,5 @@ def plane():
 
 
 if __name__ == '__main__':
-    # swissroll()
+    swissroll()
     plane()
