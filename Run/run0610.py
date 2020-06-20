@@ -12,7 +12,7 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\2plane90\\"
+    path = "E:\\ChinaGraph\\Data\\coil5obj\\"
     X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X.shape
@@ -28,11 +28,11 @@ def run_example():
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 0.2  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.5  # the weight of euclidean distance
+    params['alpha'] = 0.9  # the weight of euclidean distance
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
-    params['manifold_dimension'] = 2  # the real dimension of manifolds
-    params['perplexity'] = 30.01  # perplexity in t-SNE
+    params['manifold_dimension'] = 1  # the real dimension of manifolds
+    params['perplexity'] = 30.0  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
 
