@@ -134,7 +134,7 @@ def cov_matrix_distance(Cov, distance_type='spectralNorm'):
 
 # 使用 local PCA的降维方法
 class LocalPCADR:
-    def __init__(self, n_components=2, affinity='expCov', parameters={}, frame='MDS', manifold_dimension=2):
+    def __init__(self, n_components=2, affinity='expCov', parameters={}, frame='MDS'):
         """
         初始化方法
         :param n_components: 降维之后的维度数
@@ -172,7 +172,6 @@ class LocalPCADR:
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
                             't-SNE+': 使用 sklearn 中的加速版 t-SNE 求解
-        :param manifold_dimension: 流形本身的维度数
         """
         self.n_components = n_components
         self.affinity = affinity
@@ -212,6 +211,7 @@ class LocalPCADR:
         (n, m, k) = Cov.shape
         Q = np.zeros(Cov.shape)
         d = self.parameters['manifold_dimension']
+        sum_S = np.zeros((m, ))
 
         for i in range(0, n):
             (U, S, V) = np.linalg.svd(Cov[i, :, :])
@@ -219,6 +219,24 @@ class LocalPCADR:
                 Q[i, :, :] = np.matmul(U[:, 0:d], U[:, 0:d].T)
             else:
                 Q[i, :, :] = np.outer(U[:, 0], U[:, 0])
+
+            sum_S = sum_S + S / np.sum(S)
+
+        sum_S = sum_S / n
+        # 画每个奇异值的占比
+        plt.plot(sum_S)
+        plt.title("eigenvalues")
+        plt.show()
+
+        # 前 i 个奇异值的占比
+        top_sum = np.zeros((m, ))
+        top_sum[:] = sum_S[:]
+        for i in range(0, m):
+            top_sum[i] = top_sum[i] + top_sum[i-1]
+
+        plt.plot(top_sum)
+        plt.title("top eigenvalues")
+        plt.show()
 
         return Q
 

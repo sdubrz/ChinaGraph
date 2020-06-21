@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from MyDR.LocalPCADR import LocalPCADR
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.decomposition import PCA
 
 
 # 程序运行的示例
@@ -12,34 +13,41 @@ def run_example():
     一个使用 local PCA 降维方法的示例
     :return:
     """
-    path = "E:\\ChinaGraph\\Data\\digits5_8\\"
-    X = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
+    path = "E:\\ChinaGraph\\Data\\fashion\\"
+    X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
-    (n, m) = X.shape
+    (n, m) = X0.shape
 
     # 如果是三维的，则画出三维散点图
     if m == 3:
         ax3d = Axes3D(plt.figure())
-        ax3d.scatter(X[:, 0], X[:, 1], X[:, 2], c=label)
+        ax3d.scatter(X0[:, 0], X0[:, 1], X0[:, 2], c=label)
         plt.title('original data')
         plt.show()
 
+    if m > 64:
+        print("原数据维度过高，现降维至 50 维")
+        pca = PCA(n_components=50)
+        X = pca.fit_transform(X0)
+    else:
+        X = X0
+
     params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
-    params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
+    params['n_neighbors'] = 40  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 0.2  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.7  # the weight of euclidean distance
+    params['alpha'] = 0.6  # the weight of euclidean distance
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
-    params['manifold_dimension'] = 1  # the real dimension of manifolds
+    params['manifold_dimension'] = 10  # the real dimension of manifolds
     params['perplexity'] = 30.0  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
 
-    affinity = 't-SNE'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
+    affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
     # 'geo-t-SNE'
     frame_work = 't-SNE+'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
-    dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work, manifold_dimension=2)
+    dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work)
 
     Y = dr.fit_transform(X)
     run_str = ''  # 用于存放结果的文件名
