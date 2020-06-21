@@ -224,7 +224,7 @@ def image_scatter_part(path=None, eta=0.4, y_name="PCA.csv", label=None, image_s
 
 def mnist_scatter():
     option = 2
-    path = "E:\\ChinaGraph\\Data\\coil5obj\\"
+    path = "E:\\ChinaGraph\\Data\\coil9back\\"
     params = "t-SNE perplexity=30.0"
     if option == 1:  # 直接画散点图
         Y = np.loadtxt(path + "y.csv", dtype=np.float, delimiter=",")
