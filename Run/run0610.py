@@ -14,7 +14,7 @@ def run_example():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "OlivettiFaces"
+    data_name = "pendigits"
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -36,17 +36,17 @@ def run_example():
 
     params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
-    params['n_neighbors'] = 5  # Only used when neighborhood_type is 'knn'
+    params['n_neighbors'] = 20  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 0.2  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.5  # the weight of euclidean distance
+    params['alpha'] = 0.1  # the weight of euclidean distance
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
-    params['perplexity'] = 50.0  # perplexity in t-SNE
+    params['perplexity'] = 30.0  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
 
-    affinity = 't-SNE'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
+    affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
     # 'geo-t-SNE'
     frame_work = 't-SNE+'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work)
@@ -99,13 +99,13 @@ def run_example():
     plt.savefig(path + run_str + ".png")
     plt.show()
 
-    if np.max(label) > 10:  # 类数过多，用多类散点图画法
+    if np.max(label) > 5:  # 类数过多，用多类散点图画法
         from Tools import multi_class_plt
         multi_class_plt.multi_class_scatter(Y, label, run_str)
 
     # 画图片散点图
-    from Tools import ImageScatter
-    ImageScatter.mnist_scatter(data_name, run_str)
+    # from Tools import ImageScatter
+    # ImageScatter.mnist_scatter(data_name, run_str)
 
 
 if __name__ == '__main__':
