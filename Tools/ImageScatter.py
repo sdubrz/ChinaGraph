@@ -14,7 +14,12 @@ def create_pictures(path="", image_shape=(28, 28), inv=False, enlarge=1, trans=F
     """生成MNIST的图片"""
     # path = "E:\\Project\\DataLab\\MNIST\\"
     # path = "E:\\Project\\result2019\\result1026without_straighten\\datasets\\MNIST50mclass2_874\\"
-    X = np.loadtxt(path+"origin.csv", dtype=np.int, delimiter=",")
+    X0 = np.loadtxt(path+"origin.csv", dtype=np.float, delimiter=",")
+    if np.max(X0) < 1.1:
+        X = X0 * 255 // 1
+    else:
+        X = X0 // 1
+
     if enlarge != 1:
         X = enlarge*X
     (n, m) = X.shape
@@ -222,10 +227,15 @@ def image_scatter_part(path=None, eta=0.4, y_name="PCA.csv", label=None, image_s
     plt.show()
 
 
-def mnist_scatter():
+def mnist_scatter(data_name=None, params=None):
     option = 2
-    path = "E:\\ChinaGraph\\Data\\fashion\\"
-    params = "Frame[t-SNE+] Q alpha=0.7 beta=0.30000000000000004 manifold_dimension=1 k=10 perplexity=30.0"
+    path = "E:\\ChinaGraph\\Data\\"
+    if data_name is None:
+        path = path + "fashion0\\"
+    else:
+        path = path + data_name + "\\"
+    if params is None:
+        params = "Isomap n_neighbors=10"
     if option == 1:  # 直接画散点图
         Y = np.loadtxt(path + "y.csv", dtype=np.float, delimiter=",")
         (n, m) = Y.shape
@@ -247,7 +257,7 @@ def mnist_scatter():
         # plt.colorbar()
         plt.show()
     elif option == 2:  # 画艺术散点图
-        mnist_images(path, eta=0.6, y_name=params+".csv", image_shape=(28, 28), colormap='gray', inv=True, trans=False)  # 搜 反转
+        mnist_images(path, eta=0.4, y_name=params+".csv", image_shape=(64, 64), colormap='gray', inv=False, trans=False)  # 搜 反转
     else:  # 画部分点的艺术散点图
         image_scatter_part(path, eta=0.6, y_name=params+".csv", image_shape=(28, 28), colormap='gray', inv=True, dis=0.10, trans=False)
 
