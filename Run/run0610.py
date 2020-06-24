@@ -108,7 +108,7 @@ def run_example():
 
     # 画图片散点图
     # from Tools import ImageScatter
-    # ImageScatter.mnist_scatter(data_name, run_str) 
+    # ImageScatter.mnist_scatter(data_name, run_str)
 
 
 if __name__ == '__main__':
