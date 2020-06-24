@@ -40,7 +40,7 @@ def run_example():
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
     params['n_neighbors'] = 20  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 0.2  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.9  # the weight of euclidean distance
+    params['alpha'] = 0.34  # the weight of euclidean distance
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
