@@ -14,11 +14,14 @@ def run_example():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "letterRecognition"
+    data_name = "ParkinsonHW"
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X0.shape
+
+    normalize = True
+    if normalize:
 
     # 如果是三维的，则画出三维散点图
     if m == 3:
@@ -46,7 +49,7 @@ def run_example():
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
 
-    affinity = 't-SNE'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
+    affinity = 'PCA'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
     # 'geo-t-SNE'
     frame_work = 't-SNE'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work)
