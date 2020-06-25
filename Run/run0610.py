@@ -20,8 +20,6 @@ def run_example():
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
     (n, m) = X0.shape
 
-    normalize = True
-
     # 如果是三维的，则画出三维散点图
     if m == 3:
         ax3d = Axes3D(plt.figure())
@@ -53,7 +51,7 @@ def run_example():
     frame_work = 't-SNE+'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work)
 
-    Y = dr.fit_transform(X) 
+    Y = dr.fit_transform(X)
     run_str = ''  # 用于存放结果的文件名
 
     # 骨架点结果的画图
