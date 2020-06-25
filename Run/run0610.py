@@ -53,7 +53,7 @@ def run_example():
     frame_work = 't-SNE+'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work)
 
-    Y = dr.fit_transform(X)
+    Y = dr.fit_transform(X) 
     run_str = ''  # 用于存放结果的文件名
 
     # 骨架点结果的画图
