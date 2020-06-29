@@ -14,7 +14,7 @@ def run_example():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "MNISTtestCenter35"
+    data_name = "swissrollPlane"
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -36,9 +36,9 @@ def run_example():
 
     params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
-    params['n_neighbors'] = 15  # Only used when neighborhood_type is 'knn'
+    params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 0.2  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.3  # the weight of euclidean distance
+    params['alpha'] = 0.301  # the weight of euclidean distance
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
@@ -104,8 +104,8 @@ def run_example():
         multi_class_plt.multi_class_scatter(Y, label, run_str)
 
     # 画图片散点图
-    from Tools import ImageScatter
-    ImageScatter.mnist_scatter(data_name, run_str)
+    # from Tools import ImageScatter
+    # ImageScatter.mnist_scatter(data_name, run_str)
 
 
 if __name__ == '__main__':

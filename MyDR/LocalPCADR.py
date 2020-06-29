@@ -227,6 +227,8 @@ class LocalPCADR:
         plt.plot(sum_S)
         plt.title("eigenvalues")
         plt.show()
+        print("每个特征值的占比：")
+        print(sum_S)
 
         # 前 i 个奇异值的占比
         top_sum = np.zeros((m, ))
