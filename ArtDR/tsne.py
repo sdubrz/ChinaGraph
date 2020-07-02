@@ -104,7 +104,7 @@ def pca(X=np.array([]), no_dims=50):
     return Y
 
 
-def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
+def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0, path=None, config_str=None):
     """
         Runs t-SNE on the dataset in the NxD array X to reduce its
         dimensionality to no_dims dimensions. The syntaxis of the function is
@@ -136,6 +136,10 @@ def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
     P = x2p(X, 1e-5, perplexity)
     P = P + np.transpose(P)
     P = P / np.sum(P)
+
+    if not (path is None):
+        np.savetxt(path+config_str+" P.csv", P, fmt='%.18e', delimiter=",")
+
     P = P * 4.									# early exaggeration
     P = np.maximum(P, 1e-12)
 

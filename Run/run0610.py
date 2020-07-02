@@ -14,7 +14,7 @@ def run_example():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "swissrollPlane"
+    data_name = "swissrollPlaneClone"
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -38,17 +38,18 @@ def run_example():
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 0.2  # Only used when neighborhood_type is 'rnn'
-    params['alpha'] = 0.301  # the weight of euclidean distance
+    params['alpha'] = 0.9  # the weight of euclidean distance
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
     params['perplexity'] = 30.0  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
+    params['save_path'] = path  #
 
     affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
-    # 'geo-t-SNE'
-    frame_work = 't-SNE+'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
+    # 'geo-t-SNE'  'cTSNE
+    frame_work = 't-SNE'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work)
 
     Y = dr.fit_transform(X)

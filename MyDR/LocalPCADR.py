@@ -168,6 +168,7 @@ class LocalPCADR:
                                     当 frame == 't-SNE' 时，用于控制方差大小
                         'MAX_Distance_iter': 迭代式计算距离矩阵时，最多的迭代次数
                         'use_skeleton': 是否使用骨架点的方法，取值为 True 或 False
+                        'save_path': 用于存储中间临时结果的路径
         :param frame: 迭代求解降维结果时用的框架
                             'MDS': 使用 SAMCOF 算法求解
                             't-SNE': 使用 t-SNE 的迭代方式求解
@@ -178,6 +179,8 @@ class LocalPCADR:
         self.parameters = parameters
         self.frame = frame
         self.skeleton_Y = None  # 骨架点的降维结果
+        self.path = parameters['save_path']  # 存储中间结果的路径
+        self.config_str = '[n_neighbors=' + str(parameters['n_neighbors']) + " alpha=" + str(parameters['alpha']) + ']'
 
     def local_cov(self, X):
         """
@@ -331,6 +334,8 @@ class LocalPCADR:
             Qd = cov_matrix_distance(Q, self.parameters['distance_type'])
             Qd = Qd / (np.max(Qd) + 1e-15)
             W = self.parameters['alpha'] * Ed + self.parameters['beta'] * Qd
+            np.savetxt(self.path + self.config_str + "final_distance_matrix" + ".csv", W, fmt='%.18e', delimiter=",")
+            np.savetxt(self.path + self.config_str + "euclidean_distance_matrix" + ".csv", W, fmt='%.18e', delimiter=",")
             return W
         elif self.affinity == 'expQ':
             # 综合考虑投影矩阵 Q 与欧氏距离，然后用 exp 函数进行加工
@@ -378,7 +383,7 @@ class LocalPCADR:
             skeleton_Y = mds.fit_transform(W)
         elif self.frame == 't-SNE':
             print('Using t-SNE frame...')
-            skeleton_Y = tsneFrame.tsne_plus(W, self.parameters['perplexity'])
+            skeleton_Y = tsneFrame.tsne_plus(W, self.parameters['perplexity'], path=self.path, config_str=self.config_str)
         elif self.frame == 't-SNE+':
             print('Using t-SNE framework in sklearn...')
             tsne = tsneFramePlus.tsnePlus(n_components=self.n_components, perplexity=self.parameters['perplexity'])
@@ -418,6 +423,10 @@ class LocalPCADR:
             print('Classical method: t-SNE...')
             tsne = TSNE(n_components=self.n_components, perplexity=self.parameters['perplexity'])
             return tsne.fit_transform(X)
+        elif self.affinity == 'cTSNE':  # 用不加速版本的t-SNE降维
+            print('Classical method: classical t-SNE...')
+            from ArtDR import tsne
+            return tsne.tsne(X, perplexity=self.parameters['perplexity'], path=self.path, config_str='t-SNE ')
         elif self.affinity == 'LLE':  # 直接返回 LLE 的降维结果
             print('Classical method: LLE...')
             lle = LocallyLinearEmbedding(n_components=self.n_components, n_neighbors=self.parameters['n_neighbors'])
@@ -442,7 +451,7 @@ class LocalPCADR:
             return Y
         elif self.frame == 't-SNE':
             print('Using t-SNE frame...')
-            Y = tsneFrame.tsne_plus(W, self.parameters['perplexity'])
+            Y = tsneFrame.tsne_plus(W, self.parameters['perplexity'], path=self.path, config_str=self.config_str)
             return Y
         elif self.frame == 't-SNE+':
             print('Using t-SNE framework in sklearn...')

@@ -76,11 +76,13 @@ def d2p(D=np.array([]), tol=1e-5, perplexity=30.0):
     return P
 
 
-def tsne_plus(D, perplexity=30.0):
+def tsne_plus(D, perplexity=30.0, path=None, config_str=None):
     """
     根据计算好的概率矩阵，执行t-SNE迭代算法
     :param D: 距离矩阵
     :param perplexity:
+    :param path: 用于存储临时中间结果的路径
+    :param config_str:
     :return:
     """
     (n, m) = D.shape
@@ -92,6 +94,11 @@ def tsne_plus(D, perplexity=30.0):
     P = d2p(D, perplexity=perplexity)
     P = P + np.transpose(P)
     P = P / np.sum(P)
+
+    if not (path is None):
+        np.savetxt(path+config_str+" P.csv", P, fmt='%.18e', delimiter=",")
+    print("概率矩阵已经存储")
+
     P = P * 4.  # early exaggeration
     P = np.maximum(P, 1e-12)
 
