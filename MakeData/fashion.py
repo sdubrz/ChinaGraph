@@ -49,7 +49,39 @@ def classify():
         print(c)
 
 
+def center():
+    path1 = "E:\\ChinaGraph\\DataLab\\fashionCenter\\classify\\"
+    path2 = "E:\\ChinaGraph\\DataLab\\fashionCenter\\center\\"
+    for i in range(0, 10):
+        X = np.loadtxt(path1+"data"+str(i)+".csv", dtype=np.int, delimiter=",")
+        X = X - np.mean(X, axis=0)
+        np.savetxt(path2+"data"+str(i)+".csv", X, fmt='%d', delimiter=",")
+        print(i)
+
+
+def combine():
+    path = "E:\\ChinaGraph\\DataLab\\fashionCenter\\"
+    data = np.zeros((10000, 784))
+    origin = np.zeros((10000, 784))
+    label = np.zeros((10000, 1))
+    ptr = 0
+
+    for i in range(0, 10):
+        X = np.loadtxt(path+"center\\data"+str(i)+".csv", dtype=np.int, delimiter=",")
+        sub_origin = np.loadtxt(path+"classify\\data"+str(i)+".csv", dtype=np.int, delimiter=",")
+        (n, m) = X.shape
+        data[ptr:ptr+n, :] = X[:, :]
+        origin[ptr:ptr+n, :] = sub_origin[:, :]
+        label[ptr:ptr+n] = i
+        ptr = ptr + n
+    np.savetxt(path+"data.csv", data, fmt='%d', delimiter=",")
+    np.savetxt(path+"origin.csv", origin, fmt='%d', delimiter=",")
+    np.savetxt(path+"label.csv", label, fmt='%d', delimiter=",")
+
+
 if __name__ == '__main__':
     # test1()
-    classify()
+    # classify()
+    center()
+    combine()
 
