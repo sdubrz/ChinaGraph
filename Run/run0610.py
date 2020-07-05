@@ -141,7 +141,7 @@ def run_loop():
     else:
         X = X0
 
-    params = {}
+    params = {} 
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 0.2  # Only used when neighborhood_type is 'rnn'
