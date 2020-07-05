@@ -225,23 +225,23 @@ class LocalPCADR:
 
             sum_S = sum_S + S / np.sum(S)
 
-        sum_S = sum_S / n
-        # 画每个奇异值的占比
-        plt.plot(sum_S)
-        plt.title("eigenvalues")
-        plt.show()
-        print("每个特征值的占比：")
-        print(sum_S)
-
-        # 前 i 个奇异值的占比
-        top_sum = np.zeros((m, ))
-        top_sum[:] = sum_S[:]
-        for i in range(0, m):
-            top_sum[i] = top_sum[i] + top_sum[i-1]
-
-        plt.plot(top_sum)
-        plt.title("top eigenvalues")
-        plt.show()
+        # sum_S = sum_S / n
+        # # 画每个奇异值的占比
+        # plt.plot(sum_S)
+        # plt.title("eigenvalues")
+        # plt.show()
+        # print("每个特征值的占比：")
+        # print(sum_S)
+        #
+        # # 前 i 个奇异值的占比
+        # top_sum = np.zeros((m, ))
+        # top_sum[:] = sum_S[:]
+        # for i in range(0, m):
+        #     top_sum[i] = top_sum[i] + top_sum[i-1]
+        #
+        # plt.plot(top_sum)
+        # plt.title("top eigenvalues")
+        # plt.show()
 
         return Q
 
@@ -334,8 +334,9 @@ class LocalPCADR:
             Qd = cov_matrix_distance(Q, self.parameters['distance_type'])
             Qd = Qd / (np.max(Qd) + 1e-15)
             W = self.parameters['alpha'] * Ed + self.parameters['beta'] * Qd
-            np.savetxt(self.path + self.config_str + "final_distance_matrix" + ".csv", W, fmt='%.18e', delimiter=",")
-            np.savetxt(self.path + self.config_str + "euclidean_distance_matrix" + ".csv", W, fmt='%.18e', delimiter=",")
+            if not (self.path is None):
+                np.savetxt(self.path + self.config_str + "final_distance_matrix" + ".csv", W, fmt='%.18e', delimiter=",")
+                np.savetxt(self.path + self.config_str + "euclidean_distance_matrix" + ".csv", W, fmt='%.18e', delimiter=",")
             return W
         elif self.affinity == 'expQ':
             # 综合考虑投影矩阵 Q 与欧氏距离，然后用 exp 函数进行加工

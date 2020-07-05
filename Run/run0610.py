@@ -14,7 +14,7 @@ def run_example():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "swissrollPlaneClone"
+    data_name = "MNISTtestCenter79"
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -42,17 +42,21 @@ def run_example():
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
-    params['perplexity'] = 30.0  # perplexity in t-SNE
+    params['perplexity'] = 30.0705  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
-    params['save_path'] = path  #
+    params['save_path'] = None  # path
 
-    affinity = 'LLE'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
+    affinity = 'Q'  # affinity 的取值可以为 'cov'  'expCov'  'Q'  'expQ'  'MDS'  't-SNE'  'PCA'  'Isomap'  'LLE'
     # 'geo-t-SNE'  'cTSNE
     frame_work = 't-SNE+'  # frame 的取值可以为 'MDS'  't-SNE'  't-SNE+'
+    import time
+    start = time.time()
     dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work)
 
     Y = dr.fit_transform(X)
+    finish = time.time()
+    print("总共用时:", finish-start)
     run_str = ''  # 用于存放结果的文件名
 
     # 骨架点结果的画图
