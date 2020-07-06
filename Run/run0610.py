@@ -14,7 +14,7 @@ def run_example():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "YaleFaceCenterTop5"
+    data_name = "fashionCenter8class"
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -121,7 +121,7 @@ def run_loop():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "fashionCenter"  # fashionCenter
+    data_name = "fashionCenter8class"  # fashionCenter
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -141,7 +141,7 @@ def run_loop():
     else:
         X = X0
 
-    params = {} 
+    params = {}
     params['neighborhood_type'] = 'knn'  # 'knn' or 'rnn' or 'iter'
     params['n_neighbors'] = 10  # Only used when neighborhood_type is 'knn'
     params['neighborhood_size'] = 0.2  # Only used when neighborhood_type is 'rnn'
@@ -169,6 +169,7 @@ def run_loop():
         for n_neighbors in n_neighbors_list:
             for alpha in alpha_list:
                 plt.figure(figsize=(20, 20))  # 指定输出文件大小
+                loop_count += 1
                 print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
                 print(loop_count)
                 params['manifold_dimension'] = manifold_dimension
