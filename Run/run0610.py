@@ -175,6 +175,7 @@ def run_loop():
                 params['manifold_dimension'] = manifold_dimension
                 params['n_neighbors'] = n_neighbors
                 params['alpha'] = alpha
+                params['beta'] = 1.0 - alpha
 
                 start = time.time()
                 dr = LocalPCADR(n_components=2, affinity=affinity, parameters=params, frame=frame_work)
