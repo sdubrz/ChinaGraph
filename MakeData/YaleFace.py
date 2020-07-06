@@ -20,7 +20,7 @@ def center():
     label_list = []
     for i in range(0, n):
         if not (label0[i] in label_list):
-            label_list.append(label0[i])
+            label_list.append(label0[i]) 
 
     ptr = 0
     for cluster in label_list:
