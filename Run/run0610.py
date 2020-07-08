@@ -14,7 +14,7 @@ def run_example():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "fashionCenter8class"
+    data_name = "MNISTtestCenter"
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -121,7 +121,7 @@ def run_loop():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "fashionCenter8class"  # fashionCenter
+    data_name = "MNISTtestCenter79"  # fashionCenter
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -149,7 +149,7 @@ def run_loop():
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
-    params['perplexity'] = 30.0  # perplexity in t-SNE
+    params['perplexity'] = 30.0708  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
     params['save_path'] = None  # path
@@ -162,7 +162,7 @@ def run_loop():
     # 需要循环的参数
     n_neighbors_list = [10, 15, 20, 40]
     alpha_list = [0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9]
-    dimension_list = [2, 3, 1]
+    dimension_list = [2, 3, 1, 4, 5]
 
     loop_count = 0
     for manifold_dimension in dimension_list:
