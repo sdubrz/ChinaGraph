@@ -137,7 +137,7 @@ def run_loop():
     if m > 64:
         print("原数据维度过高，现降维至 50 维")
         pca = PCA(n_components=50)
-        X = pca.fit_transform(X0)
+        X = pca.fit_transform(X0) 
     else:
         X = X0
 
