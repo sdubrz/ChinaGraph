@@ -14,7 +14,7 @@ def run_example():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "MNISTtestCenter"
+    data_name = "coilObjCenterBack10"
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -42,7 +42,7 @@ def run_example():
     params['beta'] = 1.0 - params['alpha']  # the weight of local PCA
     params['distance_type'] = 'spectralNorm'  # 'spectralNorm' or 'mahalanobis'
     params['manifold_dimension'] = 2  # the real dimension of manifolds
-    params['perplexity'] = 30.0  # perplexity in t-SNE
+    params['perplexity'] = 30.0708  # perplexity in t-SNE
     params['MAX_Distance_iter'] = 10  # max iter of distance computing
     params['use_skeleton'] = False  # boolean value. Whether use skeleton method.
     params['save_path'] = None  # path
@@ -121,7 +121,7 @@ def run_loop():
     :return:
     """
     path = "E:\\ChinaGraph\\Data\\"
-    data_name = "MNISTtestCenter79"  # fashionCenter
+    data_name = "coilObjCenterBack10[2]"  # fashionCenter
     path = path + data_name + "\\"
     X0 = np.loadtxt(path + "data.csv", dtype=np.float, delimiter=",")
     label = np.loadtxt(path + "label.csv", dtype=np.int, delimiter=",")
@@ -137,7 +137,7 @@ def run_loop():
     if m > 64:
         print("原数据维度过高，现降维至 50 维")
         pca = PCA(n_components=50)
-        X = pca.fit_transform(X0) 
+        X = pca.fit_transform(X0)
     else:
         X = X0
 
@@ -160,9 +160,9 @@ def run_loop():
     import time
 
     # 需要循环的参数
-    n_neighbors_list = [10, 15, 20, 40]
-    alpha_list = [0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9]
-    dimension_list = [2, 3, 1, 4, 5]
+    n_neighbors_list = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30]
+    alpha_list = [0.1, 0.2, 0.3, 0.15, 0.25, 0.35]
+    dimension_list = [2, 3, 1, 4, 5, 6, 7, 8]
 
     loop_count = 0
     for manifold_dimension in dimension_list:
